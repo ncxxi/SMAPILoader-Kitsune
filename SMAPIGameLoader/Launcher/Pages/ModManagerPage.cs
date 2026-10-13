@@ -1,21 +1,17 @@
-﻿using Android.App.Job;
-using Android.Content;
+﻿using Android.Content;
+using Android.Graphics;
+using Android.Text;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
 using AndroidX.AppCompat.App;
 using AndroidX.RecyclerView.Widget;
 using Google.Android.Material.FloatingActionButton;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Android.Util;
-using Android.Widget;
-using AndroidX.AppCompat.Widget;
-using Google.Android.Material.FloatingActionButton;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using Path = System.IO.Path;
 
 namespace SMAPIGameLoader.Launcher.Pages;
 
@@ -24,10 +20,10 @@ internal sealed class ModManagerPage : LinearLayout
 {
 
     private readonly Context _context;
-    private readonly List<ModItemView> _mods = new();
+    private readonly List<ModInfo> _mods = new();
     private readonly ModAdapter _adapter;
-    private readonly TextView _countText;
     private readonly TextView _emptyText;
+    private readonly TextView _foundModsText;
     private readonly RecyclerView _list;
 
     public FloatingActionButton InstallFab { get; }
@@ -40,14 +36,27 @@ internal sealed class ModManagerPage : LinearLayout
             ViewGroup.LayoutParams.MatchParent,
             ViewGroup.LayoutParams.MatchParent);
 
-        // ---- Header ----
-        _countText = new TextView(context);
-        _countText.SetTextSize(ComplexUnitType.Sp, 20);
+        // ===== Header =====
+        var headerBox = new LinearLayout(context) { Orientation = Orientation.Vertical };
+        headerBox.SetBackgroundColor(Color.ParseColor("#1A1D24"));
+        headerBox.Elevation = Ui.Dp(context, 6);
+        headerBox.SetPadding(Ui.Dp(context, 20), Ui.Dp(context, 48), Ui.Dp(context, 20), Ui.Dp(context, 16));
 
-        var header = new LinearLayout(context) { Orientation = Orientation.Horizontal };
-        header.SetPadding(Ui.Dp(context, 16), Ui.Dp(context, 16), Ui.Dp(context, 16), Ui.Dp(context, 8));
-        header.AddView(_countText, new LayoutParams(0, ViewGroup.LayoutParams.WrapContent, 1f));
-        AddView(header, new LayoutParams(
+        var header = new TextView(context) { Text = "Mod Manager" };
+        header.SetTextSize(ComplexUnitType.Sp, 20);
+        header.SetTextColor(Color.White);
+        header.SetTypeface(null, TypefaceStyle.Bold);
+        headerBox.AddView(header);
+
+        _foundModsText = new TextView(context) { Text = "...." };
+        _foundModsText.SetTextSize(ComplexUnitType.Sp, 14);
+        _foundModsText.SetTextColor(Color.ParseColor("#9AA0A6"));
+        headerBox.AddView(_foundModsText, new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MatchParent,
+            ViewGroup.LayoutParams.WrapContent)
+        { TopMargin = Ui.Dp(context, 4) });
+
+        AddView(headerBox, new LayoutParams(
             ViewGroup.LayoutParams.MatchParent,
             ViewGroup.LayoutParams.WrapContent));
 
@@ -103,7 +112,7 @@ internal sealed class ModManagerPage : LinearLayout
             ModTool.FindManifestFile(ModTool.ModsDir, manifestFiles);
             for (int i = 0; i < manifestFiles.Count; i++)
             {
-                var mod = new ModItemView(manifestFiles[i], i);
+                var mod = new ModInfo(manifestFiles[i], i);
                 _mods.Add(mod);
             }
         }
@@ -115,13 +124,29 @@ internal sealed class ModManagerPage : LinearLayout
         //refresh
         _adapter.NotifyDataSetChanged();
 
-        _countText.Text = $"Found Mods: {_mods.Count}";
         bool empty = _mods.Count == 0;
         _emptyText.Visibility = empty ? ViewStates.Visible : ViewStates.Gone;
         _list.Visibility = empty ? ViewStates.Gone : ViewStates.Visible;
+
+        RefreshTitleHeader();
     }
 
-    private void OnClickedModItem(ModItemView mod, View anchor)
+    void RefreshTitleHeader()
+    {
+        var sb = new SpannableStringBuilder();
+        sb.Append($"Total Mods: {_mods.Count}");
+        sb.Append("\n");
+        sb.Append($"Enabled Mods: {EnabledModsCount}");
+        sb.Append("\n");
+        sb.Append($"Disabled Mods: {DisabldModsCount}");
+        _foundModsText.SetText(sb, TextView.BufferType.Spannable);
+    }
+
+
+    int EnabledModsCount => _mods.Count(m => m.Enabled);
+    int DisabldModsCount => _mods.Count(m => !m.Enabled);
+
+    private void OnClickedModItem(ModInfo mod, View anchor)
     {
         var popup = new Android.Widget.PopupMenu(_context, anchor);
         popup.Menu!.Add(0, 1, 0, "Open Folder");
@@ -139,11 +164,11 @@ internal sealed class ModManagerPage : LinearLayout
         popup.Show();
     }
 
-    private void OpenModFolder(ModItemView mod)
+    private void OpenModFolder(ModInfo mod)
     {
         try
         {
-            FileTool.OpenAppFiles(mod.modFolderPath);
+            FileTool.OpenAppFiles(mod.ModFolderPath);
         }
         catch (Exception)
         {
@@ -151,14 +176,14 @@ internal sealed class ModManagerPage : LinearLayout
         }
     }
 
-    private void OnClickDeleteMod(ModItemView mod)
+    private void OnClickDeleteMod(ModInfo mod)
     {
         new AlertDialog.Builder(_context)
             .SetTitle("Delete Mod!")
             .SetMessage($"Do you want delete \"{mod.NameUIText}\"?")
             .SetPositiveButton("Yes", (s, e) =>
             {
-                if (ModInstaller.TryDeleteMod(mod.modFolderPath))
+                if (ModInstaller.TryDeleteMod(mod.ModFolderPath))
                 {
                     RefreshMods();
                 }
@@ -175,8 +200,8 @@ internal sealed class ModManagerPage : LinearLayout
         });
     }
 
-    private void OnToggledModItem(ModItemView mod)
+    private void OnToggledModItem(ModInfo mod)
     {
-        mod.Enabled = !mod.Enabled;
+        RefreshTitleHeader();
     }
 }

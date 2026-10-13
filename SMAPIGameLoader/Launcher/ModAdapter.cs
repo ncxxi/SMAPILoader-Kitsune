@@ -9,12 +9,12 @@ namespace SMAPIGameLoader.Launcher;
 internal class ModAdapter : RecyclerView.Adapter
 {
     private readonly Context _context;
-    private readonly List<ModItemView> _mods;
-    private readonly Action<ModItemView> _onToggled;
-    private readonly Action<ModItemView, View> _onClicked;
+    private readonly List<ModInfo> _mods;
+    private readonly Action<ModInfo> _onToggled;
+    private readonly Action<ModInfo, View> _onClicked;
 
-    public ModAdapter(Context context, List<ModItemView> mods,
-                      Action<ModItemView> onToggled, Action<ModItemView, View> onClicked)
+    public ModAdapter(Context context, List<ModInfo> mods,
+                      Action<ModInfo> onToggled, Action<ModInfo, View> onClicked)
     {
         _context = context;
         _mods = mods;

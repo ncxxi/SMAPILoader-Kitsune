@@ -1,21 +1,16 @@
-﻿using Android.App;
-using Java.Lang.Ref;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using SMAPIGameLoader.Tool;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using Xamarin.Essentials;
 
 namespace SMAPIGameLoader.Launcher;
 
 internal static class ModInstaller
 {
-    public static string ModDir = Path.Combine(FileTool.ExternalFilesDir, "Mods");
+    public static string ModsDirPath = Path.Combine(FileTool.ExternalFilesDir, "Mods");
     public static Version GetMinGameVersion(JObject manifest)
     {
         try
@@ -120,7 +115,7 @@ internal static class ModInstaller
             var manifestJson = JObject.Parse(manifestText);
             string modName = manifestJson["Name"].ToString();
 
-            ExtractModZipFile(pickFile.FileName, zip, Path.Combine(ModDir));
+            ExtractModZipFile(pickFile.FileName, zip, Path.Combine(ModsDirPath));
             zip.Dispose();
 
             var modVersion = manifestJson["Version"].ToString();
@@ -172,6 +167,10 @@ internal static class ModInstaller
     {
         try
         {
+            // check if is root Mods
+            if (ModsDirPath == folderPath)
+                return false;
+
             if (Directory.Exists(folderPath) is false)
                 return false;
 
@@ -181,7 +180,7 @@ internal static class ModInstaller
             if (cleaupParentFolder)
             {
                 var parentDir = Directory.GetParent(folderPath).FullName;
-                if (parentDir != ModDir)
+                if (parentDir != ModsDirPath)
                 {
                     var dirs = Directory.GetDirectories(parentDir);
                     if (dirs.Length == 0)
