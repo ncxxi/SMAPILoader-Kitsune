@@ -39,25 +39,6 @@ internal static class FileTool
         MakeSureDirectory(dir);
     }
 
-    internal static void ClearCache()
-    {
-        try
-        {
-
-            var dir = Application.Context.ExternalCacheDir;
-            if (dir.Exists())
-                dir.Delete();
-
-            dir = Application.Context.CacheDir;
-            if (dir.Exists())
-                dir.Delete();
-        }
-        catch (Exception ex)
-        {
-            ErrorDialogTool.Show(ex);
-        }
-    }
-
     internal static void Delete(string filePath)
     {
         if (File.Exists(filePath))

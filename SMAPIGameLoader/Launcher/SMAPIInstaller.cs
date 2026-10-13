@@ -45,7 +45,7 @@ internal static class SMAPIInstaller
         {
             if (IsInstalled is false)
             {
-                return null;
+                return new Version(0, 0, 0, 0);
             }
 
             using var stream = File.OpenRead(GetInstallFilePath);
@@ -138,7 +138,7 @@ internal static class SMAPIInstaller
         if (fileName.EndsWith(".zip") is false)
             return false;
 
-        if (fileName.Contains("SMAPI-Android"))
+        if (fileName.Contains("SMAPI") && fileName.Contains("Android"))
         {
             //check file size should less than PC
             //on PC SMAPI-4.1.10-installer-for-developers.zip
@@ -207,8 +207,14 @@ internal static class SMAPIInstaller
             }
         }
 
-        FileTool.ClearCache();
     }
+    public static void UninstallSMAPI()
+    {
+        if (IsInstalled is false)
+            return;
+        File.Delete(GetInstallFilePath);
+    }
+
     public const string StardewModdingAPIFileName = "StardewModdingAPI.dll";
     public static string GetInstallFilePath => Path.Combine(GameAssemblyManager.AssembliesDirPath, StardewModdingAPIFileName);
     public static bool IsInstalled => File.Exists(GetInstallFilePath);

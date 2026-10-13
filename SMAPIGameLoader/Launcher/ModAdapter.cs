@@ -1,49 +1,32 @@
-﻿using Android.App;
-using Android.Widget;
+﻿using Android.Content;
+using Android.Views;
+using AndroidX.RecyclerView.Widget;
+using System;
 using System.Collections.Generic;
 
 namespace SMAPIGameLoader.Launcher;
 
-public class ModAdapter : BaseAdapter<ModItemView>
+internal class ModAdapter : RecyclerView.Adapter
 {
-    private readonly Activity context;
-    private readonly List<ModItemView> items;
+    private readonly Context _context;
+    private readonly List<ModItemView> _mods;
+    private readonly Action<ModItemView> _onToggled;
+    private readonly Action<ModItemView, View> _onClicked;
 
-    public ModAdapter(Activity context, List<ModItemView> items)
+    public ModAdapter(Context context, List<ModItemView> mods,
+                      Action<ModItemView> onToggled, Action<ModItemView, View> onClicked)
     {
-        this.context = context;
-        this.items = items;
+        _context = context;
+        _mods = mods;
+        _onToggled = onToggled;
+        _onClicked = onClicked;
     }
 
-    public override ModItemView this[int position] => items[position];
+    public override int ItemCount => _mods.Count;
 
-    public override int Count => items.Count;
+    public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType) =>
+        ModViewHolder.Create(_context, _onToggled, _onClicked);
 
-    public override long GetItemId(int position) => position;
-
-    public override Android.Views.View GetView(int position, Android.Views.View convertView, Android.Views.ViewGroup parent)
-    {
-        var item = items[position];
-        var view = convertView ?? context.LayoutInflater.Inflate(Resource.Layout.ModItemViewLayout, null);
-
-        view.FindViewById<TextView>(Resource.Id.modName).Text = item.NameText;
-        view.FindViewById<TextView>(Resource.Id.version).Text = item.VersionText;
-        view.FindViewById<TextView>(Resource.Id.folderPath).Text = item.FolderPathText;
-
-        return view;
-    }
-
-    public void RefreshMods()
-    {
-        NotifyDataSetChanged();
-    }
-    public ModItemView GetModOnClick(AdapterView.ItemClickEventArgs click)
-    {
-        if (items.Count == 0)
-            return null;
-        if (click.Position >= items.Count)
-            return null;
-
-        return items[click.Position];
-    }
+    public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position) =>
+        ((ModViewHolder)holder).Bind(_mods[position]);
 }

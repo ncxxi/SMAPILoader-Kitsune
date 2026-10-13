@@ -76,9 +76,6 @@ internal static class SaveManager
             RemoveEmergencySaveFile();
         }
 
-        //clean up cache after pick file
-        FileTool.ClearCache();
-
         StringBuilder sbSaveImported = new();
         sbSaveImported.AppendLine($"Successfully import saves {savesImportHashset.Count}");
 

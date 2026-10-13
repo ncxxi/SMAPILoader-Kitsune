@@ -141,8 +141,6 @@ internal static class ModInstaller
 
             DialogTool.Show("Installed Mod", modLogBuilder.ToString());
             OnInstalledCallback?.Invoke();
-
-            FileTool.ClearCache();
         }
         catch (Exception ex)
         {
@@ -170,7 +168,7 @@ internal static class ModInstaller
         }
         return result;
     }
-    internal static bool TryDeleteMod(string folderPath, bool cleaupParentFolder)
+    internal static bool TryDeleteMod(string folderPath, bool cleaupParentFolder = false)
     {
         try
         {
