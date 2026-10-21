@@ -7,9 +7,9 @@ part of this repository. This project provides the small API surface the loader
 touches. It is referenced with `Private=false` and is never packaged; at runtime
 the loader loads the real `StardewValley.dll` from the installed game.
 
-`MonoGame.Framework.dll` is copied into the intermediate output because the
-Android Java.Interop tooling needs it to resolve the loader's Android activity
-base type.
+`MonoGame.Framework.dll` is copied into the APK and used at runtime. The Android
+Java.Interop tooling generates Java peer types for this assembly, so the game's
+different MonoGame build cannot be substituted after loading.
 
 The stub layout is adapted from
 [IvanKr08/SMAPILoader-Googleless](https://github.com/IvanKr08/SMAPILoader-Googleless)

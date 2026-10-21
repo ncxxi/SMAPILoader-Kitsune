@@ -108,10 +108,11 @@ only the game API surface used by the loader. `MonoGame.Framework.dll` is
 included as a build-time reference in the same directory.
 
 The Stardew stub is marked `Private=false`, so it is never copied into the APK.
-`MonoGame.Framework.dll` is copied into the intermediate output because the
-Android Java.Interop tooling needs it to resolve `SMAPIActivity`'s base type.
-At runtime the loader extracts and loads the real `StardewValley.dll` and
-`MonoGame.Framework.dll` from the installed game.
+`MonoGame.Framework.dll` is packaged and used at runtime. The Android Java.Interop
+tooling generates Java peer types for that exact assembly, so substituting the
+game's different MonoGame build causes `ScreenReceiver` to fail with a missing
+Java peer. At runtime the loader extracts and loads the real `StardewValley.dll`
+from the installed game, but keeps its own `MonoGame.Framework.dll`.
 
 The real game must still be installed on the device. The game APK is not needed
 on the build machine.

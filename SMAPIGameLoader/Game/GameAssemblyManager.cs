@@ -35,12 +35,6 @@ internal class GameAssemblyManager
 
         {
             Console.WriteLine("try clone stardew assemblies");
-            // A previous build may have left the loader's compile-time MonoGame here.
-            // Always let the installed game provide its own assembly first.
-            var monoGamePath = Path.Combine(assembliesOutputDirPath, MonoGameDLLFileName);
-            if (File.Exists(monoGamePath))
-                File.Delete(monoGamePath);
-
             //clone dlls Stardew Valley - try base APK first, then arm64 split APK for .NET 9+
             CrashLog.Write("Reading game assembly store: " + StardewApkTool.BaseApkPath);
             var store = new AssemblyStoreExplorer(StardewApkTool.BaseApkPath, LogAssemblyStore, keepStoreInMemory: true);
@@ -69,16 +63,9 @@ internal class GameAssemblyManager
             CrashLog.Write("Loader assemblies found: " + store.Assemblies.Count);
             foreach (var asm in store.Assemblies)
             {
-                // The loader is compiled against a MonoGame reference assembly. Keep the
-                // game's own MonoGame so the game assemblies bind to the implementation
-                // they were built against.
-                if (string.Equals(asm.DllName, MonoGameDLLFileName, StringComparison.OrdinalIgnoreCase)
-                    && File.Exists(Path.Combine(assembliesOutputDirPath, MonoGameDLLFileName)))
-                {
-                    Console.WriteLine("Keeping game MonoGame.Framework.dll");
-                    continue;
-                }
-
+                // This includes the loader's MonoGame.Framework.dll. It must replace the
+                // game's copy because Java.Interop generated the Java peers for this
+                // exact assembly during the build.
                 asm.ExtractImage(assembliesOutputDirPath);
             }
             CrashLog.Write("Loader assemblies extracted");
