@@ -21,6 +21,11 @@
 		<StartupHookSupport>true</StartupHookSupport>
 
 	</PropertyGroup>
+	<PropertyGroup>
+		<!-- Set to true to require the Play Store/Galaxy Store split layout and a supported game version. -->
+		<RequireGameChecks Condition="'$(RequireGameChecks)' == ''">false</RequireGameChecks>
+		<DefineConstants Condition="'$(RequireGameChecks)' == 'true'">$(DefineConstants);REQUIRE_GAME_CHECKS</DefineConstants>
+	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 		<AndroidPackageFormat>apk</AndroidPackageFormat>
 		<PublishTrimmed>False</PublishTrimmed>
@@ -58,6 +63,9 @@
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\AssemblyStore\AssemblyStore.csproj" />
+		<ProjectReference Include="..\StardewValley.Stubs\StardewValley.Stubs.csproj">
+			<Private>false</Private>
+		</ProjectReference>
 	</ItemGroup>
 	<ItemGroup>
 		<Reference Include="0Harmony">
@@ -79,15 +87,8 @@
 			<HintPath>..\SharedLibs\MonoMod.Utils.dll</HintPath>
 		</Reference>
 		<Reference Include="MonoGame.Framework">
-			<HintPath>..\..\SMAPI-Android-1.6\src\DependenciesDll\MonoGame.Framework.dll</HintPath>
-		</Reference>
-		<Reference Include="StardewValley">
-			<HintPath>..\..\SMAPI-Android-1.6\src\DependenciesDll\StardewValley.dll</HintPath>
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="StardewValley.GameData">
-			<HintPath>..\..\SMAPI-Android-1.6\src\DependenciesDll\StardewValley.GameData.dll</HintPath>
-			<Private>False</Private>
+			<HintPath>..\StardewValley.Stubs\MonoGame.Framework.dll</HintPath>
+			<Private>false</Private>
 		</Reference>
 	</ItemGroup>
 	<ItemGroup>
@@ -98,6 +99,6 @@
 	</ItemGroup>
 	<Target Name="RestoreDotnetTools" BeforeTargets="Restore">
 		<Message Text="Restoring dotnet tools" Importance="High" />
-		<Exec Command="dotnet tool restore" />
+		<Exec Command="dotnet tool restore" IgnoreExitCode="true" />
 	</Target>
 </Project>

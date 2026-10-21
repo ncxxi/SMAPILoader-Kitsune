@@ -21,6 +21,7 @@ internal static class StardewApkTool
     static StardewApkTool()
     {
         Console.WriteLine("Initialize Stardew Apk Tool");
+        Console.WriteLine("Require game checks: " + GameCheckPolicy.RequireGameChecks);
         var playStore = ApkTool.GetPackageInfo(GamePlayStorePackageName);
         var samsung = ApkTool.GetPackageInfo(GameGalaxyStorePackageName);
 
@@ -48,10 +49,12 @@ internal static class StardewApkTool
             if (CurrentPackageInfo == null)
                 return false;
 
+            if (GameCheckPolicy.RequireGameChecks == false)
+                return true;
+
             //play store
             if (IsGameFromPlayStore)
             {
-                var version = CurrentPackageInfo.VersionName;
                 var splitApks = CurrentPackageInfo.ApplicationInfo?.SplitSourceDirs;
                 return splitApks?.Count == 2;
             }
@@ -97,7 +100,11 @@ internal static class StardewApkTool
 
                 //play store
                 if (IsGameFromPlayStore)
-                    return CurrentPackageInfo.ApplicationInfo.SplitSourceDirs?.First(path => path.Contains("split_content"));
+                {
+                    var contentApk = CurrentPackageInfo.ApplicationInfo.SplitSourceDirs?
+                        .FirstOrDefault(path => path.Contains("split_content"));
+                    return contentApk ?? BaseApkPath;
+                }
 
                 //samsung
                 return BaseApkPath;

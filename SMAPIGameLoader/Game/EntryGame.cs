@@ -21,7 +21,13 @@ internal static class EntryGame
 
         try
         {
-            if (StardewApkTool.IsGameVersionSupport == false)
+            if (StardewApkTool.CurrentPackageInfo == null)
+            {
+                ToastNotifyTool.Notify("Stardew Valley is not installed");
+                return;
+            }
+
+            if (GameCheckPolicy.RequireGameChecks && StardewApkTool.IsGameVersionSupport == false)
             {
                 ToastNotifyTool.Notify("Not support game version: " + StardewApkTool.CurrentGameVersion + ", please update game");
                 return;

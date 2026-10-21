@@ -1,7 +1,5 @@
 ﻿
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
-using StardewValley;
 using System;
 using System.IO;
 using System.IO.Compression;
@@ -61,15 +59,20 @@ static class GameAssetManager
     {
         //check & update game content
         var baseContentApk = StardewApkTool.ContentApkPath;
+        if (string.IsNullOrEmpty(baseContentApk))
+            throw new FileNotFoundException("Could not find the Stardew Valley APK");
+
         using (FileStream apkFileStream = new FileStream(baseContentApk, FileMode.Open, FileAccess.Read))
         using (ZipArchive apkArchive = new ZipArchive(apkFileStream, ZipArchiveMode.Read))
         {
             var externalAssetsDir = Path.Combine(FileTool.ExternalFilesDir, StardewAssetFolderName);
+            var foundContent = false;
             foreach (ZipArchiveEntry entry in apkArchive.Entries)
             {
                 if (entry.FullName.StartsWith("assets/Content") == false)
                     continue;
 
+                foundContent = true;
                 //Console.WriteLine($"- {entry.FullName} ({entry.Length} bytes), date: {entry.LastWriteTime}");
 
                 var destFilePath = Path.Combine(externalAssetsDir, entry.FullName.Replace("assets/", ""));
@@ -82,6 +85,9 @@ static class GameAssetManager
                 using var destFileStream = new FileStream(destFilePath, FileMode.Create, FileAccess.ReadWrite);
                 entryStream.CopyTo(destFileStream);
             }
+
+            if (foundContent == false)
+                throw new FileNotFoundException("No assets/Content entries found in the Stardew Valley APK", baseContentApk);
         }
 
         Console.WriteLine("successfully verify & clone assets");

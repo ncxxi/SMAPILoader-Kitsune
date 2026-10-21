@@ -5,7 +5,6 @@ using Android.Util;
 using Android.Views;
 using Android.Widget;
 using AndroidX.CardView.Widget;
-using StardewValley;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,10 +41,18 @@ namespace SMAPIGameLoader.Launcher
             var localDateTimeString = localDateTimeOffset.ToString("HH:mm:ss dd/MM/yyyy");
             var launcherBuildTextString = $"Build: {localDateTimeString} (d/m/y)";
 
-            _gameVersion = CreateTextView("Game Version: " + StardewApkTool.CurrentGameVersion, 14, "#9AA0A6");
+            var gameVersionText = StardewApkTool.CurrentPackageInfo is null
+                ? "Not installed"
+                : StardewApkTool.CurrentGameVersion.ToString();
+            var supportVersion = StardewApkTool.GameVersionSupport;
+            var supportVersionText = supportVersion is null
+                ? "Support Game Version: Unknown"
+                : $"Support Game Version: {supportVersion} Or Later";
+
+            _gameVersion = CreateTextView("Game Version: " + gameVersionText, 14, "#9AA0A6");
             _launcherVersion = CreateTextView("Launcher Version: " + AppInfo.VersionString, 14, "#9AA0A6");
             _launcherBuild = CreateTextView(launcherBuildTextString, 14, "#9AA0A6");
-            _suportGameVersion = CreateTextView($"Support Game Version: {StardewApkTool.GameVersionSupport} Or Later", 14, "#9AA0A6");
+            _suportGameVersion = CreateTextView(supportVersionText, 14, "#9AA0A6");
 
             var lines = new List<TextView> { _gameVersion, _suportGameVersion,
                 _launcherVersion, _launcherBuild };

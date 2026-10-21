@@ -1,0 +1,199 @@
+name: Publish APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Application display version
+        required: true
+        default: 1.1.8-preview.1
+      require_game_checks:
+        description: Require the Play Store split layout and a supported game version
+        type: boolean
+        default: false
+      prerelease:
+        description: Publish as a pre-release
+        type: boolean
+        default: true
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_VERSION: 9.0.312
+      JAVA_VERSION: '17'
+      RUNTIME_IDENTIFIER: android-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-35 build-tools;35.0.0 platform-tools'
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            version="${INPUT_VERSION#v}"
+            prerelease="$INPUT_PRERELEASE"
+          else
+            version="${GITHUB_REF_NAME#v}"
+            case "$version" in
+              *-*) prerelease=true ;;
+              *) prerelease=false ;;
+            esac
+          fi
+
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid version: $version" >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+
+      - name: Install Android workload
+        run: dotnet workload install android
+
+      - name: Restore
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet restore SMAPIGameLoader/SMAPIGameLoader.csproj \
+            -p:RuntimeIdentifier="$RUNTIME_IDENTIFIER" \
+            -p:AndroidSdkDirectory="${ANDROID_SDK_ROOT:-$ANDROID_HOME}" \
+            -p:JavaSdkDirectory="$JAVA_HOME"
+
+      - name: Patch Mono runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          dotnet_root="$(dirname "$(dirname "$(readlink -f "$(command -v dotnet)")")")"
+          runtime_root="$dotnet_root/packs/Microsoft.NETCore.App.Runtime.Mono.android-arm64"
+
+          if [ ! -d "$runtime_root" ]; then
+            echo "Mono Android runtime pack not found under $runtime_root" >&2
+            ls "$dotnet_root/packs" >&2 || true
+            exit 1
+          fi
+
+          mapfile -t targets < <(find "$runtime_root" -path '*/runtimes/android-arm64/native/libmonosgen-2.0.so' -type f)
+          if [ "${#targets[@]}" -eq 0 ]; then
+            echo "No libmonosgen-2.0.so found under $runtime_root" >&2
+            exit 1
+          fi
+
+          for target in "${targets[@]}"; do
+            echo "Replacing $target"
+            cp SharedLibs/native/arm64-v8a/libmonosgen-2.0.so "$target"
+          done
+
+      - name: Build APK
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          REQUIRE_GAME_CHECKS: ${{ inputs.require_game_checks || 'false' }}
+        run: |
+          set -euo pipefail
+          dotnet publish SMAPIGameLoader/SMAPIGameLoader.csproj \
+            -c Release \
+            --no-restore \
+            -p:RuntimeIdentifier="$RUNTIME_IDENTIFIER" \
+            -p:ApplicationDisplayVersion="$VERSION" \
+            -p:RequireGameChecks="$REQUIRE_GAME_CHECKS" \
+            -p:AndroidSdkDirectory="${ANDROID_SDK_ROOT:-$ANDROID_HOME}" \
+            -p:JavaSdkDirectory="$JAVA_HOME"
+
+      - name: Locate APK
+        id: apk
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="$(find SMAPIGameLoader/bin/Release/net9.0-android -name '*-Signed.apk' -type f | head -n1)"
+          if [ -z "$apk" ]; then
+            echo "Signed APK not found" >&2
+            find SMAPIGameLoader/bin/Release -maxdepth 4 -type f -name '*.apk' >&2 || true
+            exit 1
+          fi
+
+          mkdir -p artifacts
+          cp "$apk" artifacts/smapi-kitsune.apk
+          echo "path=artifacts/smapi-kitsune.apk" >> "$GITHUB_OUTPUT"
+          echo "name=smapi-kitsune.apk" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SMAPI-Kitsune-${{ steps.version.outputs.version }}
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+          APK: ${{ steps.apk.outputs.path }}
+          REQUIRE_GAME_CHECKS: ${{ inputs.require_game_checks || 'false' }}
+        run: |
+          set -euo pipefail
+
+          notes="$(printf 'Automated build from %s.\nVersion: %s\nStore and game checks: %s' \
+            "$GITHUB_SHA" "$VERSION" "$REQUIRE_GAME_CHECKS")"
+
+          if [ "$PRERELEASE" = "true" ]; then
+            create_flags=(--prerelease)
+            edit_flags=(--prerelease)
+          else
+            create_flags=()
+            edit_flags=(--prerelease=false)
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK" --clobber
+            gh release edit "$TAG" \
+              --title "SMAPI Kitsune $VERSION" \
+              --notes "$notes" \
+              "${edit_flags[@]}"
+          else
+            gh release create "$TAG" "$APK" \
+              --title "SMAPI Kitsune $VERSION" \
+              --notes "$notes" \
+              "${create_flags[@]}"
+          fi

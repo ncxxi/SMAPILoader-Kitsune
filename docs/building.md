@@ -9,7 +9,6 @@ The SMAPI Loader extracts game assemblies from the Stardew Valley APK, applies H
 - .NET 9 SDK (Microsoft distribution, not distro-packaged)
 - Android SDK (e.g. via Android Studio)
 - JDK 17 (required by Android build tooling)
-- Game DLLs from Stardew Valley APK (see [SMAPI building guide](../../SMAPI-Android-1.6/docs/building.md))
 - Custom Mono runtime with reflection access patches (see step 2)
 - .NET 9-compatible Harmony/MonoMod libraries (see step 3)
 
@@ -103,19 +102,17 @@ rm -f SharedLibs/MonoMod.RuntimeDetour.dll
 
 ## 4. Game DLL Dependencies
 
-The loader references `MonoGame.Framework.dll`, `StardewValley.dll`, and `StardewValley.GameData.dll` from the SMAPI project's `src/DependenciesDll/` directory. These must be extracted from the Stardew Valley APK first.
+The loader does not need the real Stardew Valley DLLs to compile. It builds
+against `StardewValley.Stubs`, a small compile-time stub assembly that provides
+only the game API surface used by the loader. `MonoGame.Framework.dll` is
+included as a build-time reference in the same directory.
 
-See the [SMAPI extract-game-dlls guide](../../SMAPI-Android-1.6/docs/extract-game-dlls.md) for instructions.
+Both references are marked `Private=false`, so neither is copied into the APK.
+At runtime the loader extracts and loads the real `StardewValley.dll` and
+`MonoGame.Framework.dll` from the installed game.
 
-The csproj references them at:
-
-```
-../../SMAPI-Android-1.6/src/DependenciesDll/MonoGame.Framework.dll
-../../SMAPI-Android-1.6/src/DependenciesDll/StardewValley.dll
-../../SMAPI-Android-1.6/src/DependenciesDll/StardewValley.GameData.dll
-```
-
-Ensure these files exist before building.
+The real game must still be installed on the device. The game APK is not needed
+on the build machine.
 
 ## 5. Build the Loader APK
 
@@ -145,6 +142,40 @@ The signed APK will be at:
 SMAPIGameLoader/bin/Release/net9.0-android/io.github.ncxxi.kitsune-Signed.apk
 ```
 
+The GitHub Actions workflow copies the signed APK to
+`artifacts/smapi-kitsune.apk` before uploading it and creating the release.
+
+### Store checks
+
+`RequireGameChecks` defaults to `false` in this fork. The startup gate, the Play Store split-layout check, and the game version gate are skipped, so a single merged Stardew Valley APK installed under the original package ID is accepted, provided it contains the game content and assemblies.
+
+To build with the original checks enabled:
+
+```bash
+dotnet build SMAPIGameLoader/SMAPIGameLoader.csproj \
+    -c Release \
+    -p:RequireGameChecks=true
+```
+
+The game must still be installed. The original package IDs are `com.chucklefish.stardewvalley` and `com.chucklefish.stardewvalleysamsung`; a different package ID is not supported.
+
+### GitHub Actions
+
+The `Publish APK` workflow builds an arm64 release APK and uploads it as a
+workflow artifact. It creates a GitHub release when manually dispatched, or when
+a tag matching `v*` is pushed.
+
+Manual runs accept:
+
+- `version` — the Android display version, for example `1.1.8-preview.1`
+- `require_game_checks` — defaults to `false`
+- `prerelease` — defaults to `true`
+
+The workflow builds with `RequireGameChecks` set from that input, patches the
+custom Mono runtime into the Android runtime pack, and publishes the signed APK
+as `smapi-kitsune.apk`. Tag builds are treated as pre-releases when the tag
+contains a hyphen, such as `v1.1.8-preview.1`.
+
 ## 6. Install on Device
 
 ```bash
@@ -166,7 +197,8 @@ Note: uninstalling removes any installed SMAPI zip and mods from the app's data 
 
 ### .NET 9 Upgrade
 
-The game (Stardew Valley 1.6.15+) is built against .NET 9. The loader must also target .NET 9 to reference the game DLLs.
+Stardew Valley 1.6.15+ is built against .NET 9. The loader targets .NET 9 to
+match the game runtime and MonoGame version.
 
 **Files changed:**
 
@@ -296,7 +328,8 @@ This is a known issue with Android SDK 35.0.105 on .NET 9. The workaround is alr
 
 ### `error CS1705: Assembly uses System.Runtime Version=9.0.0.0`
 
-The game DLLs target .NET 9. Make sure the project targets `net9.0-android` and the `NoWarn` includes `CS1705`.
+The MonoGame reference is a .NET 8 Android assembly. Make sure the loader
+targets `net9.0-android` and `NoWarn` includes `CS1705`.
 
 ### `error NETSDK1139: The target platform identifier android was not recognized`
 
@@ -308,7 +341,8 @@ The Harmony/MonoMod libraries are not .NET 9 compatible. Replace `SharedLibs/` w
 
 ### `dotnet tool restore` fails during build
 
-This is non-fatal with `IgnoreExitCode="true"`. The tool restore is for development tooling and not required for the build.
+This is non-fatal with `IgnoreExitCode="true"`. The tool restore is for
+development tooling and is not required for the loader build.
 
 ### `ArgumentOutOfRangeException` during assembly cloning
 

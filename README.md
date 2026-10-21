@@ -9,7 +9,9 @@ SMAPI Kitsune is an unofficial fork of [SMAPILoader](https://github.com/NRTnarat
 - Share Log by 1 click
 - Update SMAPI or Launcher by 1 click, without Uninstall any SMAPI or Launcher
 - No need install new game apk
-- Need to download game from Play Store only, not support game apks modify or pirate game
+- Supports the original Play Store and Galaxy Store package IDs
+- Store checks can be toggled at build time
+- GitHub Actions builds and publishes `smapi-kitsune.apk` as a pre-release
 - Support device 64bit only
 
 # Upcoming Feature
@@ -23,4 +25,5 @@ These links belong to the original SMAPILoader project:
 # Special Thanks
 - NRTnarathip and the SMAPILoader contributors for the original project
 - Eky-Team for creating guides and resources to patch .NET 8 to .NET 9
+- IvanKr08 for the Googleless build and compile-time stub approach
 - Pathoschild for support, guidance, and the community

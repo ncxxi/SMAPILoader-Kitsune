@@ -108,7 +108,7 @@ public class LauncherActivity : AppCompatActivity
         }
 
         //Assert Game Requirement
-        if (AssetGameVerify() == false)
+        if (GameCheckPolicy.RequireGameChecks && AssetGameVerify() == false)
         {
             Finish();
             return;
