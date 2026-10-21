@@ -88,7 +88,6 @@
 		</Reference>
 		<Reference Include="MonoGame.Framework">
 			<HintPath>..\StardewValley.Stubs\MonoGame.Framework.dll</HintPath>
-			<Private>false</Private>
 		</Reference>
 	</ItemGroup>
 	<ItemGroup>

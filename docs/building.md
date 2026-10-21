@@ -107,7 +107,9 @@ against `StardewValley.Stubs`, a small compile-time stub assembly that provides
 only the game API surface used by the loader. `MonoGame.Framework.dll` is
 included as a build-time reference in the same directory.
 
-Both references are marked `Private=false`, so neither is copied into the APK.
+The Stardew stub is marked `Private=false`, so it is never copied into the APK.
+`MonoGame.Framework.dll` is copied into the intermediate output because the
+Android Java.Interop tooling needs it to resolve `SMAPIActivity`'s base type.
 At runtime the loader extracts and loads the real `StardewValley.dll` and
 `MonoGame.Framework.dll` from the installed game.
 

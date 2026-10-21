@@ -6,7 +6,7 @@ on:
       version:
         description: Application display version
         required: true
-        default: 1.1.8-preview.2
+        default: 1.1.8-preview.3
       require_game_checks:
         description: Require the Play Store split layout and a supported game version
         type: boolean
