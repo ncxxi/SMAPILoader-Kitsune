@@ -25,7 +25,7 @@ public class HomePage : LinearLayout
             ViewGroup.LayoutParams.MatchParent);
 
         // ===== Header =====
-        var header = new TextView(context) { Text = "SMAPI Launcher" };
+        var header = new TextView(context) { Text = "SMAPI Kitsune" };
         header.SetTextSize(ComplexUnitType.Sp, 20);
         header.SetTextColor(Color.White);
         header.SetTypeface(null, TypefaceStyle.Bold);

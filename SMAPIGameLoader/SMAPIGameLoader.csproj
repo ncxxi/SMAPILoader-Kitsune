@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<TargetFramework>net9.0-android</TargetFramework>
 		<OutputType>Exe</OutputType>
-		<ApplicationId>com.companyname.SMAPIGameLoader</ApplicationId>
+		<ApplicationId>io.github.ncxxi.kitsune</ApplicationId>
 		<SupportedOSPlatformVersion>28.0</SupportedOSPlatformVersion>
 		<AndroidSigningKeyStore>debug.keystore</AndroidSigningKeyStore>
 		<PackageIcon>icon.png</PackageIcon>

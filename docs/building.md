@@ -1,6 +1,6 @@
-# Building SMAPI Loader from Source
+# Building SMAPI Kitsune from Source
 
-This guide covers building the SMAPI Loader (game launcher) for Android.
+This guide covers building SMAPI Kitsune (game launcher) for Android.
 
 The SMAPI Loader extracts game assemblies from the Stardew Valley APK, applies Harmony patches, loads SMAPI, and launches the game.
 
@@ -142,20 +142,20 @@ dotnet build SMAPIGameLoader\SMAPIGameLoader.csproj `
 The signed APK will be at:
 
 ```
-SMAPIGameLoader/bin/Release/net9.0-android/abc.smapi.gameloader-Signed.apk
+SMAPIGameLoader/bin/Release/net9.0-android/io.github.ncxxi.kitsune-Signed.apk
 ```
 
 ## 6. Install on Device
 
 ```bash
-adb install -r SMAPIGameLoader/bin/Release/net9.0-android/abc.smapi.gameloader-Signed.apk
+adb install -r SMAPIGameLoader/bin/Release/net9.0-android/io.github.ncxxi.kitsune-Signed.apk
 ```
 
 If upgrading over an existing install and the signing key differs:
 
 ```bash
-adb uninstall abc.smapi.gameloader
-adb install SMAPIGameLoader/bin/Release/net9.0-android/abc.smapi.gameloader-Signed.apk
+adb uninstall io.github.ncxxi.kitsune
+adb install SMAPIGameLoader/bin/Release/net9.0-android/io.github.ncxxi.kitsune-Signed.apk
 ```
 
 Note: uninstalling removes any installed SMAPI zip and mods from the app's data directory.

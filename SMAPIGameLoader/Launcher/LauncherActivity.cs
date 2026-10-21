@@ -17,7 +17,7 @@ using static Android.Provider.DocumentsContract;
 namespace SMAPIGameLoader.Launcher;
 
 [Activity(
-    Label = "SMAPI Launcher",
+    Label = "SMAPI Kitsune",
     MainLauncher = true,
     Theme = "@style/Theme.Material3.DayNight.NoActionBar",
     AlwaysRetainTaskState = true,
