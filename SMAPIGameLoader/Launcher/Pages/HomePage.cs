@@ -122,6 +122,9 @@ public class HomePage : LinearLayout
                 return;
             }
 
+            await Clipboard.SetTextAsync(CrashLog.ReadTail());
+            ToastNotifyTool.Notify("Crash log copied to clipboard");
+
             await Share.RequestAsync(new ShareFileRequest
             {
                 Title = "SMAPI Kitsune crash log",
