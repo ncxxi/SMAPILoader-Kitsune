@@ -6,7 +6,7 @@ on:
       version:
         description: Application display version
         required: true
-        default: 1.1.8-preview.1
+        default: 1.1.8-preview.2
       require_game_checks:
         description: Require the Play Store split layout and a supported game version
         type: boolean
@@ -101,23 +101,36 @@ jobs:
         run: |
           set -euo pipefail
 
-          dotnet_root="$(dirname "$(dirname "$(readlink -f "$(command -v dotnet)")")")"
-          runtime_root="$dotnet_root/packs/Microsoft.NETCore.App.Runtime.Mono.android-arm64"
+          dotnet_root="${DOTNET_ROOT:-$(dirname "$(dirname "$(readlink -f "$(command -v dotnet)")")")}"
+          echo "DOTNET_ROOT: $dotnet_root"
 
-          if [ ! -d "$runtime_root" ]; then
-            echo "Mono Android runtime pack not found under $runtime_root" >&2
-            ls "$dotnet_root/packs" >&2 || true
-            exit 1
-          fi
+          search_roots=(
+            "$dotnet_root/packs"
+            "$HOME/.dotnet/packs"
+            "$HOME/.nuget/packages"
+          )
 
-          mapfile -t targets < <(find "$runtime_root" -path '*/runtimes/android-arm64/native/libmonosgen-2.0.so' -type f)
+          targets=()
+          for search_root in "${search_roots[@]}"; do
+            [ -d "$search_root" ] || continue
+            while IFS= read -r target; do
+              targets+=("$target")
+            done < <(find "$search_root" -path '*/runtimes/android-arm64/native/libmonosgen-2.0.so' -type f 2>/dev/null)
+          done
+
+          mapfile -t targets < <(printf '%s\n' "${targets[@]}" | sort -u)
           if [ "${#targets[@]}" -eq 0 ]; then
-            echo "No libmonosgen-2.0.so found under $runtime_root" >&2
+            echo "Mono Android runtime pack not found. Searched:" >&2
+            printf '  %s\n' "${search_roots[@]}" >&2
+            echo "Available Mono runtime pack directories:" >&2
+            find "$dotnet_root" "$HOME/.dotnet" "$HOME/.nuget/packages" \
+              -maxdepth 8 -type d -iname '*mono.android-arm64*' 2>/dev/null | head -50 >&2 || true
             exit 1
           fi
 
           for target in "${targets[@]}"; do
             echo "Replacing $target"
+            chmod u+w "$target"
             cp SharedLibs/native/arm64-v8a/libmonosgen-2.0.so "$target"
           done
 
