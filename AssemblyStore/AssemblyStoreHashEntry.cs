@@ -16,7 +16,7 @@ namespace Xamarin.Android.AssemblyStore
         {
             Is32Bit = is32Bit;
 
-            Hash = reader.ReadUInt64();
+            Hash = is32Bit ? reader.ReadUInt32() : reader.ReadUInt64();
             MappingIndex = reader.ReadUInt32();
             LocalStoreIndex = reader.ReadUInt32();
             StoreID = reader.ReadUInt32();

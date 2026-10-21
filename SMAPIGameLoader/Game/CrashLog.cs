@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xamarin.Essentials;
@@ -79,11 +80,16 @@ internal static class CrashLog
                     return "(log is empty)";
 
                 using var stream = new FileStream(LogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                if (stream.Length > maxChars)
-                    stream.Seek(-maxChars, SeekOrigin.End);
+                const int readLimit = 500_000;
+                if (stream.Length > readLimit)
+                    stream.Seek(-readLimit, SeekOrigin.End);
 
                 using var reader = new StreamReader(stream);
-                return reader.ReadToEnd();
+                var text = string.Join('\n', reader.ReadToEnd()
+                    .Split('\n')
+                    .Where(line => !line.StartsWith("Warning:", StringComparison.Ordinal)));
+
+                return text.Length > maxChars ? text[^maxChars..] : text;
             }
             catch (Exception ex)
             {

@@ -18,9 +18,18 @@ internal class GameAssemblyManager
     public const string StardewDllName = "StardewValley.dll";
     public const string MonoGameDLLFileName = "MonoGame.Framework.dll";
     public static string StardewValleyFilePath => Path.Combine(AssembliesDirPath, StardewDllName);
+
+    static void LogAssemblyStore(AssemblyStoreExplorerLogLevel level, string message)
+    {
+        if (level == AssemblyStoreExplorerLogLevel.Warning)
+            return;
+        Console.WriteLine($"{level}: {message}");
+    }
+
     public static void VerifyAssemblies()
     {
         Console.WriteLine("Verify Assemblies");
+        CrashLog.Write("VerifyAssemblies start");
         var assembliesOutputDirPath = AssembliesDirPath;
         Directory.CreateDirectory(assembliesOutputDirPath);
 
@@ -33,16 +42,21 @@ internal class GameAssemblyManager
                 File.Delete(monoGamePath);
 
             //clone dlls Stardew Valley - try base APK first, then arm64 split APK for .NET 9+
-            var store = new AssemblyStoreExplorer(StardewApkTool.BaseApkPath, keepStoreInMemory: true);
+            CrashLog.Write("Reading game assembly store: " + StardewApkTool.BaseApkPath);
+            var store = new AssemblyStoreExplorer(StardewApkTool.BaseApkPath, LogAssemblyStore, keepStoreInMemory: true);
             if (store.Assemblies.Count == 0 && StardewApkTool.Arm64ApkPath != null)
             {
                 Console.WriteLine("No assemblies in base APK, trying arm64 split APK");
-                store = new AssemblyStoreExplorer(StardewApkTool.Arm64ApkPath, keepStoreInMemory: true);
+                CrashLog.Write("Reading game arm64 assembly store: " + StardewApkTool.Arm64ApkPath);
+                store = new AssemblyStoreExplorer(StardewApkTool.Arm64ApkPath, LogAssemblyStore, keepStoreInMemory: true);
             }
+
+            CrashLog.Write("Game assemblies found: " + store.Assemblies.Count);
             foreach (var asm in store.Assemblies)
             {
                 asm.ExtractImage(assembliesOutputDirPath);
             }
+            CrashLog.Write("Game assemblies extracted");
             Console.WriteLine("done clone stardew assemblies");
         }
 
@@ -50,7 +64,9 @@ internal class GameAssemblyManager
             Console.WriteLine("try clone SMAPI Game Loader Assemblies");
             //clone dll & no trimming from this app 
             var appInfo = Application.Context.ApplicationInfo;
-            var store = new AssemblyStoreExplorer(appInfo.PublicSourceDir, keepStoreInMemory: true);
+            CrashLog.Write("Reading loader assembly store: " + appInfo.PublicSourceDir);
+            var store = new AssemblyStoreExplorer(appInfo.PublicSourceDir, LogAssemblyStore, keepStoreInMemory: true);
+            CrashLog.Write("Loader assemblies found: " + store.Assemblies.Count);
             foreach (var asm in store.Assemblies)
             {
                 // The loader is compiled against a MonoGame reference assembly. Keep the
@@ -65,8 +81,11 @@ internal class GameAssemblyManager
 
                 asm.ExtractImage(assembliesOutputDirPath);
             }
+            CrashLog.Write("Loader assemblies extracted");
             Console.WriteLine("done clone SMAPI Game Loader Assemblies");
         }
+
+        CrashLog.Write("VerifyAssemblies done");
     }
     public static Assembly LoadAssembly(string dllFileName)
     {
