@@ -61,13 +61,13 @@ public class HomePage : LinearLayout
         SmapiCard = new SMAPIInfoCard(context);
         body.AddView(SmapiCard, cardLayoutParam);
 
-        PlayButton = CreateButton(context, "Launch Game", "#1565C0");
-        PlayButton.Click += PlayButton_Click;
-        body.AddView(PlayButton);
-
         LogButton = CreateButton(context, "Share Crash Log", "#37474F");
         LogButton.Click += LogButton_Click;
         body.AddView(LogButton);
+
+        PlayButton = CreateButton(context, "Launch Game", "#1565C0");
+        PlayButton.Click += PlayButton_Click;
+        body.AddView(PlayButton);
     }
 
     // ===== Helper =====
