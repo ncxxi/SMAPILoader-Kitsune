@@ -120,10 +120,12 @@ public class LauncherActivity : AppCompatActivity
 
     private const int HomeId = 1;
     private const int ModsId = 2;
+    private const int AboutId = 3;
 
     private FrameLayout _container = null!;
     private View _homePage = null!;
     private ModManagerPage _modPage = null!;
+    private AboutPage _aboutPage = null!;
     private BottomNavigationView _nav = null!;
 
     private void SetupLauncherPage()
@@ -134,14 +136,17 @@ public class LauncherActivity : AppCompatActivity
 
         _homePage = new HomePage(this);
         _modPage = new ModManagerPage(this);
+        _aboutPage = new AboutPage(this);
         _container.AddView(_homePage);
         _container.AddView(_modPage);
+        _container.AddView(_aboutPage);
 
         // Bottom navigation อยู่ล่างสุด
         _nav = new BottomNavigationView(this);
         _nav.SelectedItemId = HomeId;
         _nav.Menu.Add(0, HomeId, 0, "Home").SetIcon(Android.Resource.Drawable.IcMenuMyCalendar);
         _nav.Menu.Add(0, ModsId, 1, "Mods").SetIcon(Android.Resource.Drawable.IcMenuAgenda);
+        _nav.Menu.Add(0, AboutId, 2, "About").SetIcon(Android.Resource.Drawable.IcDialogInfo);
         _nav.ItemSelected += (s, e) =>
         {
             ShowPage(e.Item!.ItemId);
@@ -167,6 +172,7 @@ public class LauncherActivity : AppCompatActivity
     {
         _homePage.Visibility = itemId == HomeId ? ViewStates.Visible : ViewStates.Gone;
         _modPage.Visibility = itemId == ModsId ? ViewStates.Visible : ViewStates.Gone;
+        _aboutPage.Visibility = itemId == AboutId ? ViewStates.Visible : ViewStates.Gone;
     }
 
     public void OnClickStartGame()
