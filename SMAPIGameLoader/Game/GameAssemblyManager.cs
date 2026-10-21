@@ -26,6 +26,12 @@ internal class GameAssemblyManager
 
         {
             Console.WriteLine("try clone stardew assemblies");
+            // A previous build may have left the loader's compile-time MonoGame here.
+            // Always let the installed game provide its own assembly first.
+            var monoGamePath = Path.Combine(assembliesOutputDirPath, MonoGameDLLFileName);
+            if (File.Exists(monoGamePath))
+                File.Delete(monoGamePath);
+
             //clone dlls Stardew Valley - try base APK first, then arm64 split APK for .NET 9+
             var store = new AssemblyStoreExplorer(StardewApkTool.BaseApkPath, keepStoreInMemory: true);
             if (store.Assemblies.Count == 0 && StardewApkTool.Arm64ApkPath != null)
