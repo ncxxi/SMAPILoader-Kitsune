@@ -47,6 +47,16 @@ internal class GameAssemblyManager
             var store = new AssemblyStoreExplorer(appInfo.PublicSourceDir, keepStoreInMemory: true);
             foreach (var asm in store.Assemblies)
             {
+                // The loader is compiled against a MonoGame reference assembly. Keep the
+                // game's own MonoGame so the game assemblies bind to the implementation
+                // they were built against.
+                if (string.Equals(asm.DllName, MonoGameDLLFileName, StringComparison.OrdinalIgnoreCase)
+                    && File.Exists(Path.Combine(assembliesOutputDirPath, MonoGameDLLFileName)))
+                {
+                    Console.WriteLine("Keeping game MonoGame.Framework.dll");
+                    continue;
+                }
+
                 asm.ExtractImage(assembliesOutputDirPath);
             }
             Console.WriteLine("done clone SMAPI Game Loader Assemblies");
