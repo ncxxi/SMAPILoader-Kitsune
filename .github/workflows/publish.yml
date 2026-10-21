@@ -6,7 +6,7 @@ on:
       version:
         description: Application display version
         required: true
-        default: 1.1.8-preview.10
+        default: 1.1.8-preview.11
       require_game_checks:
         description: Require the Play Store split layout and a supported game version
         type: boolean
@@ -80,7 +80,14 @@ jobs:
             exit 1
           fi
 
+          app_version="${version%%-*}"
+          if [[ ! "$app_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "Invalid numeric app version: $app_version" >&2
+            exit 1
+          fi
+
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "app_version=$app_version" >> "$GITHUB_OUTPUT"
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
           echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
 
@@ -137,7 +144,7 @@ jobs:
       - name: Build APK
         shell: bash
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          APP_VERSION: ${{ steps.version.outputs.app_version }}
           REQUIRE_GAME_CHECKS: ${{ inputs.require_game_checks || 'false' }}
         run: |
           set -euo pipefail
@@ -145,7 +152,7 @@ jobs:
             -c Release \
             --no-restore \
             -p:RuntimeIdentifier="$RUNTIME_IDENTIFIER" \
-            -p:ApplicationDisplayVersion="$VERSION" \
+            -p:ApplicationDisplayVersion="$APP_VERSION" \
             -p:RequireGameChecks="$REQUIRE_GAME_CHECKS" \
             -p:AndroidSdkDirectory="${ANDROID_SDK_ROOT:-$ANDROID_HOME}" \
             -p:JavaSdkDirectory="$JAVA_HOME"
@@ -180,6 +187,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
+          APP_VERSION: ${{ steps.version.outputs.app_version }}
           TAG: ${{ steps.version.outputs.tag }}
           PRERELEASE: ${{ steps.version.outputs.prerelease }}
           APK: ${{ steps.apk.outputs.path }}
@@ -187,8 +195,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          notes="$(printf 'Automated build from %s.\nVersion: %s\nStore and game checks: %s' \
-            "$GITHUB_SHA" "$VERSION" "$REQUIRE_GAME_CHECKS")"
+          notes="$(printf 'Automated build from %s.\nRelease: %s\nAndroid version: %s\nStore and game checks: %s' \
+            "$GITHUB_SHA" "$VERSION" "$APP_VERSION" "$REQUIRE_GAME_CHECKS")"
 
           if [ "$PRERELEASE" = "true" ]; then
             create_flags=(--prerelease)

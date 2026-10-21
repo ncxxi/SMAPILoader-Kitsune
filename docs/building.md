@@ -170,7 +170,7 @@ a tag matching `v*` is pushed.
 
 Manual runs accept:
 
-- `version` — the Android display version, for example `1.1.8-preview.1`
+- `version` — the release version, for example `1.1.8-preview.1`
 - `require_game_checks` — defaults to `false`
 - `prerelease` — defaults to `true`
 
@@ -178,6 +178,10 @@ The workflow builds with `RequireGameChecks` set from that input, patches the
 custom Mono runtime into the Android runtime pack, and publishes the signed APK
 as `smapi-kitsune.apk`. Tag builds are treated as pre-releases when the tag
 contains a hyphen, such as `v1.1.8-preview.1`.
+
+The Android display version is the numeric prefix, so `1.1.8-preview.1` becomes
+`1.1.8`. SMAPI parses that value with `System.Version` and rejects pre-release
+suffixes.
 
 ## 6. Install on Device
 
