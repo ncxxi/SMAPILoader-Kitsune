@@ -36,7 +36,10 @@ public class SMAPIActivity : AndroidGameActivity
     Bundle currentBundle;
     protected override void OnCreate(Bundle bundle)
     {
+        CrashLog.Init();
+        CrashLog.Write("SMAPIActivity.OnCreate before base");
         base.OnCreate(currentBundle);
+        CrashLog.Write("SMAPIActivity.OnCreate after base");
         Console.WriteLine("SMAPIActivity.OnCreate()");
 
         //init sdk
@@ -50,29 +53,36 @@ public class SMAPIActivity : AndroidGameActivity
     void LaunchGame()
     {
         Console.WriteLine("try launch game");
+        CrashLog.Write("LaunchGame start");
         try
         {
             //ready to use all assemblies & references
             var harmony = new Harmony("SMAPIGameLoader");
             harmony.PatchAll();
             Console.WriteLine("harmony.PatchAll()");
+            CrashLog.Write("Harmony.PatchAll done");
 
             //Prepare Assemblies && fix bug
             GameAssemblyManager.LoadAssembly(GameAssemblyManager.StardewDllName);
+            CrashLog.Write("StardewValley loaded");
 
             //setup Activity
             Console.WriteLine("try integrate main activity");
             IntegrateStardewMainActivity();
+            CrashLog.Write("MainActivity integrated");
 
             //ready
             Console.WriteLine("Stardew Activity Ready");
             //fix load lib
             NativeLibManager.Loads();
+            CrashLog.Write("Native libs loaded");
 
             Stardew_OnCreate();
+            CrashLog.Write("Stardew_OnCreate returned");
         }
         catch (Exception ex)
         {
+            CrashLog.Write("LaunchGame failed: " + ex);
             ErrorDialogTool.Show(ex);
         }
     }
@@ -104,10 +114,12 @@ public class SMAPIActivity : AndroidGameActivity
     void OnCreatePartTwo()
     {
         Log.It("MainActivity.OnCreatePartTwo");
+        CrashLog.Write("OnCreatePartTwo start");
         SetupDisplaySettings();
         SetPaddingForMenus();
 
         var err = StartGameWithSMAPI();
+        CrashLog.Write(err == null ? "StartGameWithSMAPI returned" : "StartGameWithSMAPI failed: " + err);
         if (err != null)
         {
             ToastNotifyTool.Notify("error try run SMAPI: " + err.ToString());

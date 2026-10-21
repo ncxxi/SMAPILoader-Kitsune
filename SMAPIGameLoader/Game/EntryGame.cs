@@ -21,11 +21,17 @@ internal static class EntryGame
 
         try
         {
+            CrashLog.Write("LaunchGameActivityInternal start");
             if (StardewApkTool.CurrentPackageInfo == null)
             {
+                CrashLog.Write("Game package not found");
                 ToastNotifyTool.Notify("Stardew Valley is not installed");
                 return;
             }
+
+            CrashLog.Write("Game package: " + StardewApkTool.CurrentPackageInfo.PackageName
+                + ", version: " + StardewApkTool.CurrentGameVersion
+                + ", base apk: " + StardewApkTool.BaseApkPath);
 
             if (GameCheckPolicy.RequireGameChecks && StardewApkTool.IsGameVersionSupport == false)
             {
@@ -35,11 +41,13 @@ internal static class EntryGame
 
             if (SMAPIInstaller.IsInstalled is false)
             {
+                CrashLog.Write("SMAPI is not installed");
                 ToastNotifyTool.Notify("Please install SMAPI!!");
                 return;
             }
 
             GameCloner.Setup();
+            CrashLog.Write("GameCloner.Setup done");
 
 #if DEBUG
             ToastNotifyTool.Notify("Error can't start game on Debug Mode");
@@ -47,9 +55,11 @@ internal static class EntryGame
 #endif
 
             StartSMAPIActivity(launcherActivity);
+            CrashLog.Write("SMAPIActivity started");
         }
         catch (Exception ex)
         {
+            CrashLog.Write("LaunchGameActivityInternal failed: " + ex);
             ToastNotifyTool.Notify("Error:LaunchGameActivity: " + ex.ToString());
         }
     }

@@ -6,12 +6,15 @@ using Android.Util;
 using Android.Views;
 using Android.Widget;
 using System;
+using System.IO;
+using Xamarin.Essentials;
 
 namespace SMAPIGameLoader.Launcher.Pages;
 
 public class HomePage : LinearLayout
 {
     public Button PlayButton { get; }
+    public Button LogButton { get; }
     public SMAPIInfoCard SmapiCard { get; }
     public GameInfoCard GameInfoCard { get; }
 
@@ -61,6 +64,10 @@ public class HomePage : LinearLayout
         PlayButton = CreateButton(context, "Launch Game", "#1565C0");
         PlayButton.Click += PlayButton_Click;
         body.AddView(PlayButton);
+
+        LogButton = CreateButton(context, "Share Crash Log", "#37474F");
+        LogButton.Click += LogButton_Click;
+        body.AddView(LogButton);
     }
 
     // ===== Helper =====
@@ -103,5 +110,27 @@ public class HomePage : LinearLayout
     private void PlayButton_Click(object sender, System.EventArgs e)
     {
         LauncherActivity.Instance.OnClickStartGame();
+    }
+
+    private async void LogButton_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            if (File.Exists(CrashLog.LogFilePath) is false)
+            {
+                ToastNotifyTool.Notify("No crash log yet");
+                return;
+            }
+
+            await Share.RequestAsync(new ShareFileRequest
+            {
+                Title = "SMAPI Kitsune crash log",
+                File = new ShareFile(CrashLog.LogFilePath)
+            });
+        }
+        catch (Exception ex)
+        {
+            ErrorDialogTool.Show(ex);
+        }
     }
 }

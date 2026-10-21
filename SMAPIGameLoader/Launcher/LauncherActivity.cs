@@ -38,6 +38,9 @@ public class LauncherActivity : AppCompatActivity
         Platform.Init(this, savedInstanceState);
         ActivityTool.Init(this);
 
+        CrashLog.Init();
+        CrashLog.Write("LauncherActivity.OnCreate");
+
         //assert
         AssertRequirement();
 
@@ -168,6 +171,7 @@ public class LauncherActivity : AppCompatActivity
 
     public void OnClickStartGame()
     {
+        CrashLog.Write("OnClickStartGame");
         Console.WriteLine("On click start game");
         EntryGame.LaunchGameActivity(this);
         Console.WriteLine("done continue UI runner");

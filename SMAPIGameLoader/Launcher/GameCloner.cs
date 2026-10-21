@@ -82,21 +82,29 @@ internal static class GameCloner
         {
             TaskTool.NewLine("Starting cloner game assets");
             //clone game assets
+            CrashLog.Write("VerifyAssets start");
             GameAssetManager.VerifyAssets();
+            CrashLog.Write("VerifyAssets done");
             TaskTool.NewLine("Done verify asset");
+            CrashLog.Write("VerifyAssemblies start");
             GameAssemblyManager.VerifyAssemblies();
+            CrashLog.Write("VerifyAssemblies done");
             TaskTool.NewLine("Done verify assemblies");
             GameAssemblyManager.VerifyLibs();
+            CrashLog.Write("VerifyLibs done");
             TaskTool.NewLine("Done verify libs");
         }
 
         //Load MonoGame.Framework.dll into reference
+        CrashLog.Write("Load MonoGame.Framework.dll");
         GameAssemblyManager.LoadAssembly(GameAssemblyManager.MonoGameDLLFileName);
+        CrashLog.Write("MonoGame.Framework.dll loaded");
 
         //Rewrite StardewValley.dll
         if (isNeedCloenGame)
         {
             TaskTool.NewLine("Try rewriter StardewValley.dll");
+            CrashLog.Write("StardewValley rewriter start");
             using (var stardewAssemblyStream = File.Open(GameAssemblyManager.StardewValleyFilePath,
                 FileMode.Open, FileAccess.ReadWrite))
             {
@@ -108,6 +116,7 @@ internal static class GameCloner
 
                 TaskTool.NewLine("Try save StardewValley rewriter to file..");
                 stardewAssemblyDef.Write();
+                CrashLog.Write("StardewValley rewriter done");
                 TaskTool.NewLine("Successfully Rewrite StardewValley.dll");
             }
 
