@@ -104,8 +104,9 @@ rm -f SharedLibs/MonoMod.RuntimeDetour.dll
 
 The loader does not need the real Stardew Valley DLLs to compile. It builds
 against `StardewValley.Stubs`, a small compile-time stub assembly that provides
-only the game API surface used by the loader. `MonoGame.Framework.dll` is
-included as a build-time reference in the same directory.
+only the game API surface used by the loader. `MonoGame.Framework.dll` in the
+same directory is the MonoGame build matching Stardew Valley 1.6.15.3 and is
+packaged with the loader.
 
 The Stardew stub is marked `Private=false`, so it is never copied into the APK.
 `MonoGame.Framework.dll` is packaged and used at runtime. The Android Java.Interop
@@ -335,8 +336,9 @@ This is a known issue with Android SDK 35.0.105 on .NET 9. The workaround is alr
 
 ### `error CS1705: Assembly uses System.Runtime Version=9.0.0.0`
 
-The MonoGame reference is a .NET 8 Android assembly. Make sure the loader
-targets `net9.0-android` and `NoWarn` includes `CS1705`.
+The MonoGame reference must match the game's .NET version. This repository ships
+the Stardew Valley 1.6.15.3 MonoGame build, which targets .NET 9. Keep the loader
+on `net9.0-android` and keep `NoWarn` set to include `CS1705`.
 
 ### `error NETSDK1139: The target platform identifier android was not recognized`
 

@@ -13,5 +13,5 @@ different MonoGame build cannot be substituted after loading.
 
 The stub layout is adapted from
 [IvanKr08/SMAPILoader-Googleless](https://github.com/IvanKr08/SMAPILoader-Googleless)
-(GPLv3). `MonoGame.Framework.dll` is part of MonoGame (MS-PL) and is used only
-as a compile-time reference.
+(GPLv3). `MonoGame.Framework.dll` is the MonoGame build matching Stardew Valley
+1.6.15.3 (.NET 9), part of MonoGame (MS-PL), and is packaged with the loader.
